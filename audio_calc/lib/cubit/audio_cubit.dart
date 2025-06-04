@@ -1,17 +1,53 @@
+import 'dart:convert';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 part 'audio_state.dart';
 
 class AudioCubit extends Cubit<AudioState> {
-  AudioCubit() : super(AudioInitial()); // Начальное состояние
+  static const _historyKey = 'audio_calculations_history'; // Ключ для SharedPreferences
+
+  // Загрузка истории при инициализации Cubit
+  AudioCubit() : super(AudioInitial()) { // Начальное состояние
+    _loadHistory();
+  }
+
+  // Метод сохранения расчета
+  Future<void> _saveCalculation(Map<String, dynamic> calculation) async {
+    final prefs = await SharedPreferences.getInstance();
+    final historyJson = prefs.getStringList(_historyKey) ?? [];  // Получение текущей истории
+
+    historyJson.insert(0, jsonEncode(calculation));  // Добавление нового расчета в начало списка
+
+    await prefs.setStringList(_historyKey, historyJson.take(100).toList());  // Сохранение (макс. 100 записей)
+
+    _loadHistory();
+  }
+
+  // Метод для загрузки истории 
+  Future<void> _loadHistory() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final historyJson = prefs.getStringList(_historyKey) ?? [];
+
+      // Преобразование json строки обратно в Map
+      final history = historyJson.map((json) =>
+        Map<String, dynamic>.from(jsonDecode(json))).toList();
+
+      emit(AudioHistory(history));  // Отправка нового состояния
+    } catch (e) {
+      emit(AudioError('Ошибка загрузки истории'));
+    }
+  }
 
   // Метод для расчета объема файла
-  void calculateAudioSize({
+  Future<void> calculateAudioSize({
     required int fileType,
     required int sampleRate,
     required int bitDepth,
     required double duration,
-  }) {
+  }) async {
     print('[DEBUG] Параметры: fileType=$fileType, sampleRate=$sampleRate, bitDepth=$bitDepth, duration=$duration');
     emit(AudioLoading()); // Переход в состояние загрузки
 
@@ -34,10 +70,26 @@ class AudioCubit extends Cubit<AudioState> {
         formattedSize = '${(fileSize / (1024 * 1024 * 1024 * 1024)).toStringAsFixed(2)} ТБ';
       }
 
-      emit(AudioCalculated(fileSize, formattedSize)); // Успешный результат
+      // Формируем объект с данными 
+      final calculationData = {
+        'fileType': fileType,
+        'sampleRate': sampleRate,
+        'bitDepth': bitDepth,
+        'duration': duration,
+        'fileSize': fileSize,
+        'formattedSize': formattedSize,
+        'timestamp': DateTime.now().toIso8601String()  // Дата и время
+      };
+
+      await _saveCalculation(calculationData);
+      emit(AudioCalculated(fileSize, formattedSize, calculationData)); // Успешный результат
     } catch (e) {
       print('[ERROR] Ошибка в calculateAudioSize: $e');
       emit(AudioError('Ошибка расчета: $e')); // Ошибка
-    }
+    };
+  }
+
+  void loadHistory() async {
+    await _loadHistory();
   }
 }

@@ -19,7 +19,12 @@ class ResultScreen extends StatelessWidget {
       body: BlocBuilder<AudioCubit, AudioState>(
         builder: (context, state) {
           print('[DEBUG] Текущее состояние: $state');
-          if (state is AudioCalculated) {  // Всему свое время
+
+          if (state is AudioLoading) {
+            return Center(child: CircularProgressIndicator());
+
+
+          } else if (state is AudioCalculated) {  // Всему свое время
           return Padding(
             padding: const EdgeInsets.all(16.0),  // Отступы от краев
             child: Column(
@@ -42,9 +47,9 @@ class ResultScreen extends StatelessWidget {
           // Обработка особых случаев
           } else if (state is AudioError) {
             return Center(child: Text('Ошибка: ${state.message}'));
-          } else {
-            return Center(child: CircularProgressIndicator());
-          }
+          } 
+          
+          return Center(child: Text('Данные не загружены'));
         }
       )
       /*
