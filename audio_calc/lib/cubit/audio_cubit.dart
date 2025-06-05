@@ -6,6 +6,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 part 'audio_state.dart';
 
 class AudioCubit extends Cubit<AudioState> {
+  @override
+  void onChange(Change<AudioState> change) {
+    super.onChange(change);
+    print('[CUBIT] State changed from ${change.currentState} to ${change.nextState}');
+  }
+
   static const _historyKey = 'audio_calculations_history'; // Ключ для SharedPreferences
 
   // Загрузка истории при инициализации Cubit
@@ -21,8 +27,6 @@ class AudioCubit extends Cubit<AudioState> {
     historyJson.insert(0, jsonEncode(calculation));  // Добавление нового расчета в начало списка
 
     await prefs.setStringList(_historyKey, historyJson.take(100).toList());  // Сохранение (макс. 100 записей)
-
-    _loadHistory();
   }
 
   // Метод для загрузки истории 
@@ -81,12 +85,22 @@ class AudioCubit extends Cubit<AudioState> {
         'timestamp': DateTime.now().toIso8601String()  // Дата и время
       };
 
-      await _saveCalculation(calculationData);
       emit(AudioCalculated(fileSize, formattedSize, calculationData)); // Успешный результат
+      await _saveCalculation(calculationData);
     } catch (e) {
       print('[ERROR] Ошибка в calculateAudioSize: $e');
       emit(AudioError('Ошибка расчета: $e')); // Ошибка
     };
+  }
+
+  Future<void> clearHistory() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_historyKey);
+      emit(AudioHistory([]));
+    } catch (e) {
+      emit(AudioError('Ошибка очистки истории'));
+    }
   }
 
   void loadHistory() async {

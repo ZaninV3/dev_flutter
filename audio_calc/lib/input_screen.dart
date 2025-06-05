@@ -139,11 +139,28 @@ class _InputScreenState extends State<InputScreen> {
                       duration: double.parse(_durationController.text)
                     );
 
+                    // Задержка для обработки состояний
+                    await Future.delayed(Duration(milliseconds: 50));
+
+                    if (mounted) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => BlocProvider.value(
+                            value: cubit,
+                            child: ResultScreen()
+                          )
+                        )
+                      );
+                    }
+                    /*
                     final currentState = cubit.state;
                     if (currentState is AudioCalculated && mounted) {
                       Navigator.push(context,
                       MaterialPageRoute(builder: (_) => ResultScreen()));
                     }
+                    */
+
                   } else if (!isAgreed) {
                     // Показываем сообщение об ошибке если нет согласия
                     ScaffoldMessenger.of(context).showSnackBar(

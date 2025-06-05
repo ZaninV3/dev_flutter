@@ -10,7 +10,37 @@ class HistoryScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('История')
+        title: const Text('История'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete),
+            onPressed: () {
+              // Диалог подтверждения
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: const Text('Очистить историю'),
+                    content: const Text('Вы уверены?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Отмена')
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          context.read<AudioCubit>().clearHistory();
+                          Navigator.pop(context);
+                        },
+                        child: const Text('Очистить', style: TextStyle(color: Colors.red))
+                      )
+                    ]
+                  );
+                }
+              );
+            }            
+          )
+        ]
       ),
       body: BlocBuilder<AudioCubit, AudioState>(  // Слушаем состояния Cubit
         builder: (context, state) {
