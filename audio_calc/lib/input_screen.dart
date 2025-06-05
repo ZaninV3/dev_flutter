@@ -1,3 +1,4 @@
+import 'package:audio_calc/history_screen.dart';
 import 'package:flutter/material.dart';
 import 'result_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -124,31 +125,42 @@ class _InputScreenState extends State<InputScreen> {
               
               // Кнопка для расчета
               ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
                   // Проверяем валидность формы и согласие
                   if (_formKey.currentState!.validate() && isAgreed) {
 
 
 
                     final cubit = context.read<AudioCubit>();  // Получение cubit из контекста
-                    cubit.calculateAudioSize(  // Вызов расчета
+                    await cubit.calculateAudioSize(  // Вызов расчета
                       fileType: int.parse(_fileTypeController.text),
                       sampleRate: int.parse(_sampleRateController.text),
                       bitDepth: int.parse(_bitDepthController.text),
                       duration: double.parse(_durationController.text)
                     );
-                    // Добавляем задержку для теста
-                    Future.delayed(Duration(milliseconds: 100), () {
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => ResultScreen()));
-                    });
 
+                    // Задержка для обработки состояний
+                    await Future.delayed(Duration(milliseconds: 50));
 
+                    if (mounted) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => BlocProvider.value(
+                            value: cubit,
+                            child: ResultScreen()
+                          )
+                        )
+                      );
+                    }
+                    /*
+                    final currentState = cubit.state;
+                    if (currentState is AudioCalculated && mounted) {
+                      Navigator.push(context,
+                      MaterialPageRoute(builder: (_) => ResultScreen()));
+                    }
+                    */
 
-                    // Переход на экран результатов
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => ResultScreen())  // Парсить теперь нет смысла
-                    );
                   } else if (!isAgreed) {
                     // Показываем сообщение об ошибке если нет согласия
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -158,6 +170,20 @@ class _InputScreenState extends State<InputScreen> {
                 },
                 child: Text('Рассчитать'),
               ),
+
+              // История расчетов
+              ElevatedButton(
+                onPressed: () async {
+                  // Загрузка истории и открытие экрана
+                  context.read<AudioCubit>().loadHistory();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const HistoryScreen())
+                  );
+                }, style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blueGrey,
+                ),
+                child: const Text('История расчетов'))
             ],
           ),
         ),

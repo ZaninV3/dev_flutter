@@ -18,10 +18,21 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      home: BlocProvider.value(
+        value: BlocProvider.of<AudioCubit>(context),
+        child: Scaffold(
+          appBar: AppBar(title: Text('Занин Вячеслав Александрович')),
+          body: InputScreen()
+        )
+      )
+    );
+    /*
+    return MaterialApp(
       home: Scaffold(
         appBar: AppBar(title: Text('Занин Вячеслав Александрович')),
         body: InputScreen()
       ),
     );
+    */
   }
 }
