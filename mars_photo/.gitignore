@@ -1,3 +1,8 @@
+.env
+# In this project need to create '.env' file in this subrepository
+# There is NASA_API_KEY in the file
+
+
 # Miscellaneous
 *.class
 *.log
