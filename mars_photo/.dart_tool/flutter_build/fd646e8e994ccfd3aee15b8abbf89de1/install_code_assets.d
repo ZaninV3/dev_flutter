@@ -1,0 +1,1 @@
+ /home/vy/Documents/GitHub/dev_flutter/mars_photo/.dart_tool/flutter_build/fd646e8e994ccfd3aee15b8abbf89de1/native_assets.json: 
